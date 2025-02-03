@@ -1,4 +1,4 @@
-import { IDecision } from "@/interfaces";
+import { IDecisionError, IDecision } from "@/interfaces";
 
 export const mergeInputDecisions = (
   type: string,
@@ -11,3 +11,11 @@ export const mergeInputDecisions = (
     },
   },
 });
+
+export const getDecisionError = (e: IDecisionError | string): string | null => {
+  if (typeof e === "string") {
+    return e;
+  }
+
+  return e?.errors?.[0]?.detail ?? e?.message ?? null;
+};
