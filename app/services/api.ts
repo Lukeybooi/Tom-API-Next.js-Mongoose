@@ -34,7 +34,7 @@ export const makeDecision = async (
       "Content-Type": "application/vnd.api+json",
     },
   });
-  return res.data?.decision;
+  return res.data;
 };
 
 export const queryBatch = async (
