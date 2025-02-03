@@ -1,49 +1,50 @@
+import { IDecision, IModel } from "@/interfaces";
 import axios from "axios";
 
 const API_KEY: string | undefined = process.env.NEXT_PUBLIC_TOM_API_KEY;
 const API_TOKEN_PREFIX: string = "Token";
 const API_URL: string = "https://api.up2tom.com/v3";
 
-export interface Model {
-  id: string;
-  attributes: {
-    name: string;
-    metadata: {
-      attributes: { name: string }[];
-    };
-  };
-}
-
-export interface DecisionResponse {
-  decision: any;
-}
-
-export const fetchModels = async (): Promise<Model[]> => {
-  const res = await axios.get<{ data: Model[] }>(`${API_URL}/models`, {
+export const fetchModels = async (): Promise<IModel[]> => {
+  const res = await axios.get<{ data: IModel[] }>(`${API_URL}/models`, {
     headers: { Authorization: `${API_TOKEN_PREFIX} ${API_KEY}` },
   });
 
   return res.data.data;
 };
 
-export const fetchModelDetails = async (modelId: string): Promise<Model> => {
-  const res = await axios.get<{ data: Model }>(`${API_URL}/models/${modelId}`, {
-    headers: { Authorization: `${API_TOKEN_PREFIX} ${API_KEY}` },
-  });
+export const fetchModelDetails = async (modelId: string): Promise<IModel> => {
+  const res = await axios.get<{ data: IModel }>(
+    `${API_URL}/models/${modelId}`,
+    {
+      headers: { Authorization: `${API_TOKEN_PREFIX} ${API_KEY}` },
+    }
+  );
 
   return res.data.data;
 };
 
 export const makeDecision = async (
   modelId: string,
-  input: Record<string, string>
-): Promise<DecisionResponse> => {
-  const res = await axios.post<{ decision: any }>(
-    `${API_URL}/decision/${modelId}`,
-    input,
-    {
-      headers: { Authorization: `${API_TOKEN_PREFIX} ${API_KEY}` },
-    }
+  input: IDecision
+): Promise<IDecision> => {
+  const res = await axios.post(`${API_URL}/decision/${modelId}`, input, {
+    headers: {
+      Authorization: `${API_TOKEN_PREFIX} ${API_KEY}`,
+      "Content-Type": "application/vnd.api+json",
+    },
+  });
+  return res.data?.decision;
+};
+
+export const queryBatch = async (
+  modelIds: string,
+  inputs: { [key in string]: any }
+): Promise<void> => {
+  const res = await axios.post(
+    `${API_URL}/batch`,
+    { modelIds, inputs },
+    { headers: { Authorization: `${API_TOKEN_PREFIX} ${API_KEY}` } }
   );
   return res.data;
 };
