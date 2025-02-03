@@ -1,24 +1,15 @@
 "use client";
 
 import { ModelError, ModelForm, ModelSelect } from "@/components";
-import { fetchModelDetails, fetchModels, makeDecision } from "@/services/api";
+import { IDecision, IModel } from "@/interfaces";
+import {
+  fetchModelDetails,
+  fetchModels,
+  makeDecision,
+  saveDecision,
+} from "@/services/api";
+import { mergeInputDecisions } from "@/utils";
 import { useEffect, useState } from "react";
-
-interface IModel {
-  id: string;
-  attributes: {
-    name: string;
-    metadata: {
-      attributes: { name: string }[];
-    };
-  };
-}
-
-interface IDecision {
-  input: { [key in string]: any };
-  decision: string;
-  meets_confidence: boolean;
-}
 
 const GENERIC_ERROR_MSG = "Something went wrong, please try again later.";
 const MESSAGE_DELAY = 3000;
@@ -77,10 +68,17 @@ const Home = () => {
     if (!selectedModel) return;
 
     try {
-      const result = await makeDecision(selectedModel.id, inputs);
-      setDecision(result?.decision);
+      const result = await makeDecision(
+        selectedModel.id,
+        mergeInputDecisions(selectedModel?.type, inputs)
+      );
+      setDecision(result);
+
+      // Save decision to MongoDB
+      await saveDecision(selectedModel.id, inputs, result);
     } catch (_e) {
       setMessage(GENERIC_ERROR_MSG);
+      console.log("LOG::ERROR:", _e);
     }
   };
 
@@ -123,14 +121,12 @@ const Home = () => {
       {decision && (
         <div className="mt-4 p-4 border rounded bg-gray-100">
           <h3 className="text-lg font-bold">Decision</h3>
-          {decision?.decision && (
+          {decision?.data && (
             <p className="tracking-tighter text-gray-500 md:text-lg dark:text-gray-400">
-              {decision.decision}
+              {decision?.data?.attributes?.decision}
             </p>
           )}
-          {!decision?.decision && (
-            <pre>{JSON.stringify(decision, null, 2)}</pre>
-          )}
+          {!decision?.data && <pre>{JSON.stringify(decision, null, 2)}</pre>}
         </div>
       )}
     </div>
