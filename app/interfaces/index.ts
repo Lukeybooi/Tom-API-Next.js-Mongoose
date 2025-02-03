@@ -1,3 +1,14 @@
+export interface IDecisionError {
+  errors?: IDecisionErrorMetada[];
+  message?: string;
+}
+
+export interface IDecisionErrorMetada {
+  title: string;
+  detail: string;
+  status: number;
+}
+
 export interface IDecision {
   data: IDecisionMetadata;
 }
@@ -40,24 +51,19 @@ export interface IPrediction {
 }
 
 export interface IDomain {
-  type: string;
-  values: string[];
-}
-
-export interface IAttribute {
-  domain: IDomain2;
-  name: string;
-  question: string;
-  type: string;
-}
-
-export interface IDomain2 {
   discrete?: boolean;
   interval?: number;
   lower?: number;
   type: string;
   upper?: number;
-  values?: string[];
+  values: string[];
+}
+
+export interface IAttribute {
+  domain: IDomain;
+  name: string;
+  question: string;
+  type: string;
 }
 
 export interface IExclusions {
