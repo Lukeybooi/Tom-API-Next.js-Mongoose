@@ -51,3 +51,31 @@ npm run dev
 # OR
 yarn dev
 ```
+
+🚀 API Endpoints
+1️⃣ Fetch All Decisions
+📌 GET /api/decisions
+Returns all stored user decisions.
+
+2️⃣ Save a Decision
+📌 POST /api/decisions
+
+Body (JSON)
+
+```sh
+{
+  "modelId": "12345",
+  "inputs": { "drink": "coffee" },
+  "decision": { "result": "approved" }
+}
+```
+
+- Response
+
+```sh
+{
+  "success": true,
+  "message": "Decision saved successfully",
+  "data": { "modelId": "12345", "inputs": { "drink": "coffee" }, "decision": { "result": "approved" } }
+}
+```
