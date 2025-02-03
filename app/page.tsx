@@ -1,6 +1,7 @@
 "use client";
 
 import { ModelError, ModelForm, ModelSelect } from "@/components";
+import { GENERIC_ERROR_MSG, MESSAGE_DELAY } from "@/constants";
 import { IDecision, IModel } from "@/interfaces";
 import {
   fetchModelDetails,
@@ -8,18 +9,16 @@ import {
   makeDecision,
   saveDecision,
 } from "@/services/api";
-import { mergeInputDecisions } from "@/utils";
+import { getDecisionError, mergeInputDecisions } from "@/utils";
 import { useEffect, useState } from "react";
-
-const GENERIC_ERROR_MSG = "Something went wrong, please try again later.";
-const MESSAGE_DELAY = 3000;
 
 const Home = () => {
   const [models, setModels] = useState<IModel[]>([]);
   const [selectedModel, setSelectedModel] = useState<IModel>();
   const [inputs, setInputs] = useState<Record<string, string>>({});
+  const [metadata, setMetadata] = useState<any[]>([]);
   const [decision, setDecision] = useState<IDecision>();
-  const [message, setMessage] = useState<string>();
+  const [errMessage, setErrMessage] = useState<string>();
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -28,7 +27,7 @@ const Home = () => {
         const fetchedModels = await fetchModels();
         setModels(fetchedModels);
       } catch (_e) {
-        setMessage(GENERIC_ERROR_MSG);
+        setErrMessage(GENERIC_ERROR_MSG);
       } finally {
         setLoading(false);
       }
@@ -39,28 +38,41 @@ const Home = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (message) setMessage(undefined);
+      if (errMessage) setErrMessage(undefined);
     }, MESSAGE_DELAY);
 
     return () => clearTimeout(timer);
-  }, [message]);
+  }, [errMessage]);
 
   const handleModelSelect = async (modelId: string) => {
     try {
       const modelDetails = await fetchModelDetails(modelId);
       setSelectedModel(modelDetails);
+
+      const fields = modelDetails?.attributes?.metadata?.attributes;
+      setMetadata(fields);
+
       setInputs(
-        modelDetails.attributes.metadata.attributes.reduce(
-          (acc, attr) => ({ ...acc, [attr.name]: "" }),
+        fields.reduce(
+          (acc: Record<string, string>, attr: any) => ({
+            ...acc,
+            [attr.name]: "",
+          }),
           {}
         )
       );
+
+      if (decision) {
+        setDecision(undefined);
+      }
     } catch (_e) {
-      setMessage(GENERIC_ERROR_MSG);
+      setErrMessage(GENERIC_ERROR_MSG);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setInputs({ ...inputs, [e.target.name]: e.target.value });
   };
 
@@ -68,6 +80,8 @@ const Home = () => {
     if (!selectedModel) return;
 
     try {
+      if (errMessage) setErrMessage(undefined);
+
       const result = await makeDecision(
         selectedModel.id,
         mergeInputDecisions(selectedModel?.type, inputs)
@@ -76,9 +90,10 @@ const Home = () => {
 
       // Save decision to MongoDB
       await saveDecision(selectedModel.id, inputs, result);
-    } catch (_e) {
-      setMessage(GENERIC_ERROR_MSG);
-      console.log("LOG::ERROR:", _e);
+    } catch (error) {
+      setErrMessage(
+        getDecisionError((error as any)?.response?.data) ?? GENERIC_ERROR_MSG
+      );
     }
   };
 
@@ -91,11 +106,11 @@ const Home = () => {
     <div className="p-6 max-w-md mx-auto bg-white shadow-lg rounded-lg">
       <h1 className="text-xl font-semibold mb-4">TOM API Model Selection</h1>
 
-      {message && (
+      {errMessage && (
         <ModelError
           heading="Error!"
-          message={message}
-          onClose={() => setMessage(undefined)}
+          message={errMessage}
+          onClose={() => setErrMessage(undefined)}
         />
       )}
 
@@ -112,6 +127,7 @@ const Home = () => {
           </h2>
           <ModelForm
             inputs={inputs}
+            metadata={metadata}
             onChange={handleInputChange}
             onSubmit={handleSubmit}
           />
