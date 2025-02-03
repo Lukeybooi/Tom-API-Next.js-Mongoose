@@ -14,6 +14,7 @@ interface IProps {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
   onSubmit: (e: React.FormEvent) => void;
+  onBatch: () => void;
 }
 
 export const ModelForm: FC<IProps> = ({
@@ -21,6 +22,7 @@ export const ModelForm: FC<IProps> = ({
   metadata,
   onChange,
   onSubmit,
+  onBatch,
 }) => (
   <div className="space-y-2">
     {metadata.map(({ name, question, type, domain }) => (
@@ -59,6 +61,14 @@ export const ModelForm: FC<IProps> = ({
       className="w-full py-2 bg-blue-500 text-white rounded-md"
     >
       Submit
+    </button>
+
+    <button
+      type="button"
+      onClick={onBatch}
+      className="w-full py-2 bg-green-400 text-white rounded-md"
+    >
+      Get Batch File Payload
     </button>
   </div>
 );

@@ -37,7 +37,18 @@ export const makeDecision = async (
   return res.data;
 };
 
-export const queryBatch = async (
+export const getBatch = async (
+  modelIds: string
+): Promise<{ [key in string]: any }> => {
+  const res = await axios.get(
+    `${API_URL}/batch/${modelIds}`,
+
+    { headers: { Authorization: `${API_TOKEN_PREFIX} ${API_KEY}` } }
+  );
+  return res.data;
+};
+
+export const processBatch = async (
   modelIds: string,
   inputs: { [key in string]: any }
 ): Promise<void> => {
